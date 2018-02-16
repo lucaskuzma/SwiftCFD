@@ -10,7 +10,7 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    var densities : [Double] = [Double](count: FluidDynamicsSolver_v2.CELL_COUNT, repeatedValue: 0);
+    var densities : [Double] = [Double](repeating: 0, count: FluidDynamicsSolver_v2.CELL_COUNT);
     
     @IBOutlet var uiImageView: UIImageView!
     var uiImage : UIImage?;
@@ -27,7 +27,7 @@ class ViewController: UIViewController {
         dispatchSolve();
     }
     
-    @IBAction func buttonClick(sender: AnyObject)
+    @IBAction func buttonClick(_ sender: AnyObject)
     {
         FluidDynamicsSolver_v2.frameNumber = 0;
     }
@@ -36,9 +36,9 @@ class ViewController: UIViewController {
     var previousTouchY : Int?;
  
  
-    override func touchesMoved(touches: Set<UITouch>, withEvent event: UIEvent?)
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?)
     {
-        let touch:CGPoint? = event?.allTouches()?.first?.locationInView(uiImageView)
+        let touch:CGPoint? = event?.allTouches?.first?.location(in: uiImageView)
         
         if let touchX = touch?.x
         {
@@ -46,11 +46,12 @@ class ViewController: UIViewController {
             {
                 let scaledX = touchX / 3
                 let scaledY = touchY / 3
+                let intScaledX = Int(scaledX)
+                let intScaledY = Int(scaledY)
                 
-                
-                for var i = scaledX - 3; i < scaledX + 3; i++
+                for i in intScaledX - 3 ..< intScaledX + 3
                 {
-                    for var j = scaledY - 3; j < scaledY + 3; j++
+                    for j in intScaledY - 3 ..< intScaledY + 3
                     {
                         let targetIndex = FluidDynamicsSolver_v2.getIndex(Int(i), j: Int(j));
                         
@@ -76,7 +77,7 @@ class ViewController: UIViewController {
     }
     
     
-    override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?)
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?)
     {
         previousTouchX = nil;
         previousTouchY = nil;

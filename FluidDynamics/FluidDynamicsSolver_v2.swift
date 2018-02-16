@@ -34,19 +34,19 @@ struct FluidDynamicsSolver_v2
     static let diff = 0.0;
     static let linearSolverIterations = 2;
     
-    static var d = [Double](count: CELL_COUNT, repeatedValue: 0);
-    static var dOld = [Double](count: CELL_COUNT, repeatedValue: 0);
-    static var u = [Double](count: CELL_COUNT, repeatedValue: 0);
-    static var uOld = [Double](count: CELL_COUNT, repeatedValue: 0);
-    static var v = [Double](count: CELL_COUNT, repeatedValue: 0);
-    static var vOld = [Double](count: CELL_COUNT, repeatedValue: 0);
-    static var curl = [Double](count: CELL_COUNT, repeatedValue: 0);
+    static var d = [Double](repeating: 0, count: CELL_COUNT);
+    static var dOld = [Double](repeating: 0, count: CELL_COUNT);
+    static var u = [Double](repeating: 0, count: CELL_COUNT);
+    static var uOld = [Double](repeating: 0, count: CELL_COUNT);
+    static var v = [Double](repeating: 0, count: CELL_COUNT);
+    static var vOld = [Double](repeating: 0, count: CELL_COUNT);
+    static var curl = [Double](repeating: 0, count: CELL_COUNT);
     
     static func fluidDynamicsStep() -> [Double]
     {
         let startTime : CFAbsoluteTime = CFAbsoluteTimeGetCurrent();
         
-        if frameNumber++ < 100
+        if frameNumber < 100
         {
             for i in 90 ..< 110
             {
@@ -72,6 +72,7 @@ struct FluidDynamicsSolver_v2
                 }
             }
         }
+        frameNumber = frameNumber + 1
         
         velocitySolver();
         densitySolver();
@@ -91,7 +92,7 @@ struct FluidDynamicsSolver_v2
         
         d = advect(0, d0: dOld, du: u, dv: v);
         
-        dOld = [Double](count: CELL_COUNT, repeatedValue: 0);
+        dOld = [Double](repeating: 0, count: CELL_COUNT);
     }
     
     static func velocitySolver()
@@ -126,8 +127,8 @@ struct FluidDynamicsSolver_v2
         
         project()
         
-        uOld = [Double](count: CELL_COUNT, repeatedValue: 0);
-        vOld = [Double](count: CELL_COUNT, repeatedValue: 0);
+        uOld = [Double](repeating: 0, count: CELL_COUNT);
+        vOld = [Double](repeating: 0, count: CELL_COUNT);
     }
     
     static func advectUV()
@@ -137,9 +138,9 @@ struct FluidDynamicsSolver_v2
         let dt0x = dt * DBL_GRID_HEIGHT;
         let dt0y = dt * DBL_GRID_HEIGHT;
         
-        for var i = GRID_HEIGHT; i >= 1; i--
+        for i in stride(from: GRID_WIDTH, through: 1, by: -1) //var i = GRID_HEIGHT; i >= 1; i -= 1
         {
-            for var j = GRID_HEIGHT; j >= 1; j--
+            for j in stride(from: GRID_HEIGHT, through: 1, by: -1) //var j = GRID_HEIGHT; j >= 1; j -= 1
             {
                 let index = FluidDynamicsSolver_v2.getIndex(i, j :j);
                 
@@ -188,18 +189,18 @@ struct FluidDynamicsSolver_v2
         
     }
     
-    static func advect (b:Int, d0:[Double], du:[Double], dv:[Double]) -> [Double]
+    static func advect (_ b:Int, d0:[Double], du:[Double], dv:[Double]) -> [Double]
     {
-        var returnArray = [Double](count: CELL_COUNT, repeatedValue: 0.0)
+        var returnArray = [Double](repeating: 0.0, count: CELL_COUNT)
         
         //let dt0 = dt * DBL_GRID_HEIGHT;
         
         let dt0x = dt * DBL_GRID_HEIGHT;
         let dt0y = dt * DBL_GRID_HEIGHT;
         
-        for var i = GRID_HEIGHT; i >= 1; i--
+        for i in stride(from: GRID_WIDTH, through: 1, by: -1) //var i = GRID_HEIGHT; i >= 1; i -= 1
         {
-            for var j = GRID_HEIGHT; j >= 1; j--
+            for j in stride(from: GRID_HEIGHT, through: 1, by: -1) //var j = GRID_HEIGHT; j >= 1; j -= 1
             {
                 let index = FluidDynamicsSolver_v2.getIndex(i, j: j);
                 
@@ -255,12 +256,12 @@ struct FluidDynamicsSolver_v2
     // project is always on u and v....
     static func project()
     {
-        var p = [Double](count: CELL_COUNT, repeatedValue: 0);
-        var div = [Double](count: CELL_COUNT, repeatedValue: 0);
+        var p = [Double](repeating: 0, count: CELL_COUNT);
+        var div = [Double](repeating: 0, count: CELL_COUNT);
         
-        for var i = GRID_HEIGHT; i >= 1; i--
+        for i in 1 ..< GRID_WIDTH //var i = GRID_HEIGHT; i >= 1; i -= 1
         {
-            for var j = GRID_HEIGHT; j >= 1; j--
+            for j in 1 ..< GRID_HEIGHT //var j = GRID_HEIGHT; j >= 1; j -= 1
             {
                 let index = FluidDynamicsSolver_v2.getIndex(i, j : j);
                 let left = index - 1;
@@ -280,9 +281,9 @@ struct FluidDynamicsSolver_v2
         
         p = linearSolver(0, x: p, x0: div, a: 1, c: 4);
         
-        for var i = GRID_WIDTH; i >= 1; i--
+        for i in stride(from: GRID_WIDTH, through: 1, by: -1) //var i = GRID_WIDTH; i >= 1; i -= 1
         {
-            for var j = GRID_HEIGHT; j >= 1; j--
+            for j in stride(from: GRID_HEIGHT, through: 1, by: -1) //var j = GRID_HEIGHT; j >= 1; j -= 1
             {
                 let index = FluidDynamicsSolver_v2.getIndex(i, j : j);
                 let left = index - 1;
@@ -304,11 +305,11 @@ struct FluidDynamicsSolver_v2
         let a:Double = dt * diff * Double(CELL_COUNT);
         let c:Double = 1 + 4 * a
         
-        for var k = 0; k < linearSolverIterations ; k++
+        for _ in 0 ..< linearSolverIterations
         {
-            for var i = GRID_WIDTH; i >= 1; i--
+            for i in stride(from: GRID_WIDTH, through: 1, by: -1) //ar i = GRID_WIDTH; i >= 1; i -= 1
             {
-                for var j = GRID_HEIGHT; j >= 1; j--
+                for j in stride(from: GRID_HEIGHT, through: 1, by: -1) //var j = GRID_HEIGHT; j >= 1; j -= 1
                 {
                     let index = FluidDynamicsSolver_v2.getIndex(i, j: j);
                     let left = index - 1;
@@ -324,15 +325,15 @@ struct FluidDynamicsSolver_v2
         }
     }
     
-    static func linearSolver(b:Int, x:[Double], x0:[Double], a:Double, c:Double) -> [Double]
+    static func linearSolver(_ b:Int, x:[Double], x0:[Double], a:Double, c:Double) -> [Double]
     {
-        var returnArray = [Double](count: CELL_COUNT, repeatedValue: 0.0)
+        var returnArray = [Double](repeating: 0.0, count: CELL_COUNT)
         
-        for var k = 0; k < linearSolverIterations ; k++
+        for _ in 0 ..< linearSolverIterations
         {
-            for var i = GRID_WIDTH; i >= 1; i--
+            for i in stride(from: GRID_WIDTH, through: 1, by: -1) //var i = GRID_WIDTH; i >= 1; i -= 1
             {
-                for var j = GRID_HEIGHT; j >= 1; j--
+                for j in stride(from: GRID_HEIGHT, through: 1, by: -1) //var j = GRID_HEIGHT; j >= 1; j -= 1
                 {
                     let index = FluidDynamicsSolver_v2.getIndex(i, j: j);
                     let left = index - 1;
@@ -349,7 +350,7 @@ struct FluidDynamicsSolver_v2
         return returnArray;
     }
     
-    static func diffuse(b:Int, c:[Double], c0:[Double], diff:Double) -> [Double]
+    static func diffuse(_ b:Int, c:[Double], c0:[Double], diff:Double) -> [Double]
     {
         let a:Double = dt * diff * Double(CELL_COUNT);
         
@@ -367,9 +368,9 @@ struct FluidDynamicsSolver_v2
         
         
         // sum all temperatures
-        for var i = 1; i <= GRID_WIDTH; i++
+        for i in 1...GRID_WIDTH //var i = 1; i <= GRID_WIDTH; i += 1
         {
-            for var j = 1; j <= GRID_HEIGHT; j++
+            for j in 1...GRID_HEIGHT //var j = 1; j <= GRID_HEIGHT; j += 1
             {
                 Tamb += d[FluidDynamicsSolver_v2.getIndex(i, j: j)];
             }
@@ -379,9 +380,9 @@ struct FluidDynamicsSolver_v2
         Tamb /= Double(CELL_COUNT);
         
         // for each cell compute buoyancy force
-        for var i = GRID_WIDTH; i >= 1; i--
+        for i in stride(from: GRID_WIDTH, through: 1, by: -1) //var i = GRID_WIDTH; i >= 1; i -= 1
         {
-            for var j = GRID_HEIGHT; j >= 1; j--
+            for j in stride(from: GRID_HEIGHT, through: 1, by: -1) //var j = GRID_HEIGHT; j >= 1; j -= 1
             {
                 let index = FluidDynamicsSolver_v2.getIndex(i, j: j);
                 
@@ -393,18 +394,18 @@ struct FluidDynamicsSolver_v2
     // always on vorticityConfinement(uOld, vOld);
     static func vorticityConfinement()
     {
-        for var i = GRID_WIDTH; i >= 1; i--
+        for i in stride(from: GRID_WIDTH, through: 1, by: -1) //var i = GRID_WIDTH; i >= 1; i -= 1
         {
-            for var j = GRID_HEIGHT; j >= 1; j--
+            for j in stride(from: GRID_HEIGHT, through: 1, by: -1) //var j = GRID_HEIGHT; j >= 1; j -= 1
             {
                 let tt=curlf(i, j: j)
                 curl[FluidDynamicsSolver_v2.getIndex(i, j: j)] = tt<0 ? tt * -1:tt;
             }
         }
         
-        for var i = 2; i < GRID_WIDTH; i++
+        for i in 2 ..< GRID_WIDTH
         {
-            for var j = 2; j < GRID_HEIGHT; j++
+            for j in 2 ..< GRID_HEIGHT
             {
                 let index = FluidDynamicsSolver_v2.getIndex(i, j: j);
                 let left = index - 1;
@@ -431,7 +432,7 @@ struct FluidDynamicsSolver_v2
         }
     }
     
-    static func curlf(i:Int, j:Int) -> Double
+    static func curlf(_ i:Int, j:Int) -> Double
     {
         let index = FluidDynamicsSolver_v2.getIndex(i, j: j);
         let left = index - 1;
@@ -445,7 +446,7 @@ struct FluidDynamicsSolver_v2
         return du_dy - dv_dx;
     }
     
-    static func setBoundry(b:Int, x:[Double]) -> [Double]
+    static func setBoundry(_ b:Int, x:[Double]) -> [Double]
     {
         let returnArray = x;
         
@@ -488,18 +489,18 @@ struct FluidDynamicsSolver_v2
     
     static func addSourceUV()
     {
-        for var i = CELL_COUNT - 1; i >= 0; i--
+        for i in stride(from: CELL_COUNT - 1, through: 0, by: -1) //var i = CELL_COUNT - 1; i >= 0; i -= 1
         {
             u[i] = u[i] + dt * uOld[i];
             v[i] = v[i] + dt * vOld[i];
         }
     }
     
-    static func addSource(x:[Double], x0:[Double]) -> [Double]
+    static func addSource(_ x:[Double], x0:[Double]) -> [Double]
     {
-        var returnArray = [Double](count: CELL_COUNT, repeatedValue: 0.0)
+        var returnArray = [Double](repeating: 0.0, count: CELL_COUNT)
         
-        for var i = CELL_COUNT - 1; i >= 0; i--
+        for i in stride(from: CELL_COUNT - 1, through: 0, by: -1) //var i = CELL_COUNT - 1; i >= 0; i -= 1
         {
             returnArray[i] = x[i] + dt * x0[i];
         }
@@ -529,7 +530,7 @@ struct FluidDynamicsSolver_v2
         vOld = tmp;
     }
     
-    static func getIndex(i : Int, j : Int) -> Int
+    static func getIndex(_ i : Int, j : Int) -> Int
     {
         return i + (FluidDynamicsSolver_v2.GRID_WIDTH) * j;
     }

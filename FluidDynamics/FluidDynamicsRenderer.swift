@@ -13,26 +13,28 @@ import Foundation
 import UIKit
 
 private let rgbColorSpace = CGColorSpaceCreateDeviceRGB()
-private let bitmapInfo:CGBitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.PremultipliedFirst.rawValue)
+private let bitmapInfo:CGBitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedFirst.rawValue)
 
-private func imageFromARGB32Bitmap(pixels:[PixelData], width:Int, height:Int)->UIImage
+private func imageFromARGB32Bitmap(_ pixels:[PixelData], width:Int, height:Int)->UIImage
 {
     let bitsPerComponent:Int = 8
     let bitsPerPixel:Int = 32
     
     var data = pixels // Copy to mutable []
-    let providerRef = CGDataProviderCreateWithCFData(NSData(bytes: &data, length: data.count * sizeof(PixelData)))
+    //let providerRef = CGDataProvider(data: CFData(bytes: UnsafePointer<UInt8>(&data), count: data.count * sizeof(PixelData)))
     
-    let cgim = CGImageCreate(width, height, bitsPerComponent, bitsPerPixel, width * Int(sizeof(PixelData)), rgbColorSpace,	bitmapInfo, providerRef, nil, true, CGColorRenderingIntent.RenderingIntentDefault)
+    let providerRef = CGDataProvider(data: NSData(bytes: &data, length: data.count * MemoryLayout<PixelData>.size))
     
-    return UIImage(CGImage: cgim!);
+    let cgim = CGImage(width: width, height: height, bitsPerComponent: bitsPerComponent, bitsPerPixel: bitsPerPixel, bytesPerRow: width * Int(MemoryLayout<PixelData>.size), space: rgbColorSpace,	bitmapInfo: bitmapInfo, provider: providerRef!, decode: nil, shouldInterpolate: true, intent: CGColorRenderingIntent.defaultIntent)
+    
+    return UIImage(cgImage: cgim!);
 }
 
-func renderFluidDynamics(densities : [Double]) -> UIImage
+func renderFluidDynamics(_ densities : [Double]) -> UIImage
 {
-    var pixelArray = [PixelData](count: densities.count, repeatedValue: PixelData(a: 255, r:0, g: 0, b: 0));
+    var pixelArray = [PixelData](repeating: PixelData(a: 255, r:0, g: 0, b: 0), count: densities.count);
     
-    for var i = 0; i < FluidDynamicsSolver_v2.CELL_COUNT; i++
+    for i in 0 ..< FluidDynamicsSolver_v2.CELL_COUNT
     {
         let pixelValue = UInt8(255 * densities[i]);
         

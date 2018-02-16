@@ -15,13 +15,13 @@ struct FluidDynamicsCell
     var v : Double = 0;
     var curl : Double = 0;
     
-    mutating func setUV(value:(u : Double, v : Double))
+    mutating func setUV(_ value:(u : Double, v : Double))
     {
         self.u = value.u;
         self.v = value.v;
     }
     
-    mutating func addUV(value:(u : Double, v : Double))
+    mutating func addUV(_ value:(u : Double, v : Double))
     {
         self.u = self.u + value.u;
         self.v = self.v + value.v;
